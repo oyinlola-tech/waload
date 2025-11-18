@@ -31,48 +31,53 @@
 
     <div class="services-grid">
         <div class="service-item">
-            <div class="service-icon"><i class="fa-solid fa-mobile-screen-button" aria-hidden="true"></i></div>
-            <div class="service-label">Recharge</div>
-        </div>
-        <div class="service-item">
-            <div class="service-icon"><i class="fa-solid fa-box" aria-hidden="true"></i></div>
-            <div class="service-label">Data Bundle</div>
-        </div>
-        <div class="service-item">
-            <div class="service-icon"><i class="fa-solid fa-bolt" aria-hidden="true"></i></div>
-            <div class="service-label">Electricity</div>
-        </div>
-        <div class="service-item" id="moreService">
-            <button id="moreBtn" class="service-more" aria-expanded="false" aria-controls="moreOptions">
-                <div class="service-icon"><i class="fa-solid fa-ellipsis" aria-hidden="true"></i></div>
-                <div class="service-label">More</div>
+            <button class="service-btn" id="serviceRecharge" aria-label="Recharge">
+                <div class="service-icon"><i class="fa-solid fa-mobile-screen-button" aria-hidden="true"></i></div>
+                <div class="service-label">Recharge</div>
             </button>
         </div>
-    </div>
-    <!-- Hidden expanded options for More -->
-    <div class="more-options" id="moreOptions" aria-hidden="true">
-        <div class="service-item more-tv">
-            <div class="service-icon"><i class="fa-solid fa-tv" aria-hidden="true"></i></div>
-            <div class="service-label">TV</div>
+        <div class="service-item">
+            <button class="service-btn" id="serviceData" aria-label="Buy data bundle">
+                <div class="service-icon"><i class="fa-solid fa-box" aria-hidden="true"></i></div>
+                <div class="service-label">Data Bundle</div>
+            </button>
         </div>
-        <div class="service-item more-refer">
-            <div class="service-icon"><i class="fa-solid fa-user-group" aria-hidden="true"></i></div>
-            <div class="service-label">Refer & Earn</div>
+        <div class="service-item">
+            <button class="service-btn service-transfer" id="serviceTransfer" aria-label="Transfer money">
+                <div class="service-icon"><i class="fa-solid fa-arrow-right-arrow-left" aria-hidden="true"></i></div>
+                <div class="service-label">Transfer</div>
+            </button>
+        </div>
+        <div class="service-item">
+            <button class="service-btn" id="serviceElectricity" aria-label="Pay electricity">
+                <div class="service-icon"><i class="fa-solid fa-bolt" aria-hidden="true"></i></div>
+                <div class="service-label">Electricity</div>
+            </button>
+        </div>
+        <div class="service-item">
+            <button class="service-btn" id="serviceTV" aria-label="Pay TV subscription">
+                <div class="service-icon"><i class="fa-solid fa-tv" aria-hidden="true"></i></div>
+                <div class="service-label">TV</div>
+            </button>
+        </div>
+        <div class="service-item">
+            <button class="service-btn" id="serviceRefer" aria-label="Refer and earn">
+                <div class="service-icon"><i class="fa-solid fa-user-group" aria-hidden="true"></i></div>
+                <div class="service-label">Refer & Earn</div>
+            </button>
         </div>
     </div>
     <div class="money-transfer">
         <div class="section-title">History</div>
-        <div class="transaction-history">
-            <div class="transaction-details">
-                <div class="transaction-name">Received from FOLUSO FUNMILAYO</div>
-                <div class="transaction-amount">+ ₦9,020.00</div>
-                <div class="transaction-date">May 12, 2023, 11:07 AM</div>
+        <div id="historyPreview">
+            <div class="history-preview-list" aria-live="polite">
+                <!-- Recent transactions will be injected here -->
             </div>
             <a href="features/history.html" class="history-link">History &gt;</a>
         </div>
     </div>
     
-    <div class="section-title">Services</div>
+    <div class="section-title">Ads</div>
     <div class="promo-card">
         <div class="promo-title">Merge Your Dance Cards</div>
         <div class="promo-subtitle">By Monday<br>Unlock your rewards</div>
@@ -89,7 +94,7 @@
             <i class="fa-solid fa-wallet" aria-hidden="true"></i>
             <span>Finance</span>
         </a>
-        <a href="#" class="nav-btn">
+        <a href="features/rewards.html" class="nav-btn">
             <i class="fa-solid fa-gift" aria-hidden="true"></i>
             <span>Rewards</span>
         </a>
@@ -106,12 +111,68 @@
                 <label for="txAmount" class="small">Amount (NGN)</label>
                 <input id="txAmount" type="number" min="0" step="0.01" placeholder="0.00">
             </div>
+                <div class="modal-row hidden" id="txNetworkRow">
+                    <label for="txNetwork" class="small">Network</label>
+                    <select id="txNetwork">
+                        <option value="">-- Select network --</option>
+                        <option value="mtn">MTN</option>
+                        <option value="glo">GLO</option>
+                        <option value="airtel">Airtel</option>
+                        <option value="9mobile">9mobile</option>
+                    </select>
+                </div>
+                <div class="modal-row hidden" id="txRecipientRow">
+                    <label for="txRecipient" class="small">Recipient (Phone or Account)</label>
+                    <input id="txRecipient" type="text" placeholder="e.g. +2348010000000">
+                </div>
+                <div class="modal-row hidden" id="txBundleRow">
+                    <label for="txBundle" class="small">Choose Bundle / Bouquet</label>
+                    <select id="txBundle">
+                        <option value="">-- Select --</option>
+                        <!-- Options will be populated dynamically according to mode (data or tv) -->
+                    </select>
+                </div>
+                <div class="modal-row" id="txErrorRow" style="display:none;">
+                    <div id="txError" class="small" style="color:#c0392b;"></div>
+                </div>
             <div class="modal-actions">
                 <button id="txCancel" class="btn secondary">Cancel</button>
                 <button id="txSubmit" class="btn">Submit</button>
             </div>
         </div>
     </div>
+
+    <!-- Confirm modal for transactions -->
+    <div class="modal-backdrop" id="confirmModalBackdrop" role="dialog" aria-hidden="true">
+        <div class="modal" role="document" aria-labelledby="confirmTitle">
+            <h3 id="confirmTitle">Confirm Transaction</h3>
+            <div class="modal-row" id="confirmDetails"></div>
+            <div class="modal-actions">
+                <button id="confirmCancel" class="btn secondary">Cancel</button>
+                <button id="confirmOk" class="btn">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Referral modal -->
+    <div class="modal-backdrop" id="referModalBackdrop" role="dialog" aria-hidden="true">
+        <div class="modal" role="document" aria-labelledby="referTitle">
+            <h3 id="referTitle">Refer & Earn</h3>
+            <div class="modal-row">
+                <p class="small">Share this referral code with friends — you both earn rewards.</p>
+                <div style="display:flex;gap:8px;align-items:center;">
+                    <div id="referCode" style="background:#f5f5f5;padding:8px 12px;border-radius:8px;font-weight:700;">WALOAD-XXXXXX</div>
+                    <button id="copyRefer" class="btn">Copy</button>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button id="referClose" class="btn">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast container -->
+    <div id="toastContainer" aria-live="polite" style="position:fixed;right:16px;bottom:90px;z-index:3000;pointer-events:none;"></div>
 
     <script src="js/script.js"></script>
 </body>

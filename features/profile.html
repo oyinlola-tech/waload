@@ -14,12 +14,22 @@
             <h1 class="page-title">My Profile</h1>
         </div>
 
-    </div>    <div class="profile-card">
+        <div style="height:72px"></div>
+
+        <div class="profile-card">
             <div class="profile-row">
-                <div class="avatar" id="avatar">NN</div>
+                <div>
+                    <div class="avatar" id="avatar">NN</div>
+                </div>
                 <div class="flex-1">
                     <div class="row-between-centered">
                         <div>
+                            <div class="strong" id="profileName">Nkennor</div>
+                            <div class="small" id="profilePhone">+234 801 000 0000</div>
+                        </div>
+                        <div>
+                            <button id="editBtn" class="btn outline-blue">Edit</button>
+                        </div>
                     </div>
 
                     <!-- Add Card Modal -->
@@ -57,8 +67,7 @@
                         </div>
                     </div>
 
-                    <!-- bottom nav (same as main) -->
-                        <button id="editBtn" class="btn outline-blue">Edit</button>
+                    <!-- controls -->
                     </div>
 
                     <div class="profile-field">
@@ -66,14 +75,30 @@
                         <div class="value" id="profileEmail">nkennor@example.com</div>
                     </div>
 
-                    <div class="profile-controls">
-                        <a href="history.html" class="btn" id="historyLink">Transaction History</a>
-                        <button id="customerCare" class="btn secondary">Customer Care</button>
-                        <button id="addCardBtn" class="btn">Add Bank Card</button>
-                        <button id="logoutBtn" class="btn logout">Log out</button>
+                    <div class="profile-section" id="sectionTransactions">
+                        <div class="strong">Transactions</div>
+                        <div class="small">View and manage your transaction history.</div>
+                        <div style="margin-top:8px;"><a href="history.html" class="btn" id="historyLink">Transaction History</a></div>
                     </div>
 
-                    <div class="card-list" id="cardList"></div>
+                    <div class="profile-section" id="sectionSupport">
+                        <div class="strong">Support</div>
+                        <div class="small">Get help from customer care.</div>
+                        <div style="margin-top:8px;"><button id="customerCare" class="btn secondary">Customer Care</button></div>
+                    </div>
+
+                    <div class="profile-section" id="sectionCards">
+                        <div class="strong">Cards</div>
+                        <div class="small">Manage your saved bank cards.</div>
+                        <div style="margin-top:8px;"><button id="addCardBtn" class="btn">Add Bank Card</button></div>
+                        <div class="card-list" id="cardList" style="margin-top:8px;"></div>
+                    </div>
+
+                    <div class="profile-section" id="sectionAccount">
+                        <div class="strong">Account</div>
+                        <div class="small">Account actions and settings.</div>
+                        <div style="margin-top:8px;"><button id="logoutBtn" class="btn logout">Log out</button></div>
+                    </div>
 
                     <div class="limits" id="limitsBox">
                         <div class="row-between-centered">
@@ -119,7 +144,7 @@
             <i class="fa-solid fa-wallet" aria-hidden="true"></i>
             <span>Finance</span>
         </a>
-        <a href="" class="nav-btn">
+        <a href="rewards.html" class="nav-btn">
             <i class="fa-solid fa-gift" aria-hidden="true"></i>
             <span>Rewards</span>
         </a>
@@ -129,6 +154,6 @@
         </a>
     </nav>
 
-    <script src="../js/app.js"></script>
+    <script src="../js/script.js"></script>
 </body>
 </html>

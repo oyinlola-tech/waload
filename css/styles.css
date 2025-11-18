@@ -189,6 +189,11 @@ body {
     font-size: 12px;
 }
 
+/* Reset and style service buttons to remove default borders that show as thin lines */
+.service-btn { background: transparent; border: none; padding: 0; width:100%; text-align:center; cursor: pointer; }
+.service-btn:focus { outline: 2px solid rgba(37,117,252,0.18); outline-offset: 2px; border-radius: 8px; }
+.service-icon { border: none; }
+
 /* Expanded 'more' options */
 .more-options { display: none; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-top: 12px; }
 .more-options.show { display: grid; }
@@ -307,6 +312,22 @@ body {
 .modal .btn { padding:8px 12px; }
 .modal-backdrop.show { display:flex; }
 
+/* Select inside modal */
+.modal select { width:100%; padding:8px 10px; border-radius:8px; border:1px solid #ddd; background:#fff; }
+
+/* Toasts */
+.toast { pointer-events:auto; background:#333; color:#fff; padding:10px 14px; border-radius:8px; margin-top:8px; box-shadow:0 6px 16px rgba(0,0,0,0.12); min-width:220px; }
+.toast.success { background: #2ecc71; }
+.toast.error { background: #e74c3c; }
+.toast .toast-close { background:transparent; border:none; color:inherit; font-weight:700; margin-left:8px; cursor:pointer; }
+
+/* Toast animations */
+.toast { animation: toast-in 280ms ease-out; }
+@keyframes toast-in { from { transform: translateY(8px); opacity:0; } to { transform: translateY(0); opacity:1; } }
+
+/* Disabled input style for auto-filled amount */
+.input-disabled { background:#f3f4f6; color:#555; }
+
 /* Page-specific styles moved from features/profile.html */
 .profile-container { padding: 20px; max-width: 700px; margin: 0 auto; }
 .profile-card { background: linear-gradient(135deg,#fff 0%,#fff); border-radius:12px; padding:18px; box-shadow:0 6px 18px rgba(0,0,0,0.06); }
@@ -323,6 +344,44 @@ body {
 .card-item { padding:10px; border-radius:8px; background:#fafafa; border:1px solid #eee; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center; }
 .limits { margin-top:12px; padding:10px; background:#fafafa; border-radius:8px; border:1px solid #eee; }
 .small { font-size:13px; color:#666;}
+
+/* Profile sections in profile page */
+.profile-section { margin-top:14px; padding:12px; background:#fff; border-radius:10px; border:1px solid #eee; box-shadow:0 2px 6px rgba(0,0,0,0.03); }
+.profile-section .strong { display:block; margin-bottom:6px; }
+
+/* Mobile responsiveness tweaks */
+@media (max-width: 480px) {
+    body { padding: 12px; }
+    .header { gap:8px; }
+    .avatar-small { width:34px; height:34px; font-size:12px; }
+    .greeting { font-size:20px; }
+    .subtitle { font-size:14px; }
+    .balance-card { padding:16px; border-radius:12px; }
+    .balance-amount { font-size:24px; }
+    .services-grid { grid-template-columns: repeat(3, 1fr); gap:10px; }
+    .service-icon { width:48px; height:48px; font-size:16px; }
+    .service-label { font-size:11px; }
+    .promo-card { padding:14px; }
+    .profile-container { padding: 12px; }
+    .profile-card { padding:14px; border-radius:12px; }
+    .profile-row { display:flex; flex-direction:column; gap:12px; align-items:flex-start; }
+    .avatar { width:64px; height:64px; font-size:18px; }
+    .profile-section { padding:10px; }
+    .profile-section .btn { width:100%; display:block; }
+    .card-item { flex-direction:column; align-items:flex-start; gap:8px; }
+    .modal { width: calc(100% - 32px); max-width:420px; }
+    .modal .modal-actions { flex-direction:column-reverse; gap:8px; }
+    .modal .modal-actions .btn { width:100%; }
+    #toastContainer { right: 10px; left: 10px; }
+}
+
+@media (max-width: 360px) {
+    .services-grid { grid-template-columns: repeat(3,1fr); gap:8px; }
+    .service-icon { width:46px; height:46px; }
+}
+
+/* Utility helpers */
+.hidden { display: none !important; }
 
 /* History page tweaks moved from features/history.html */
 .history-container { padding: 20px; max-width: 800px; margin: 0 auto; }

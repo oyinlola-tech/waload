@@ -13,11 +13,35 @@
     var amtEl = qs('balanceAmount');
     var depositBtn = qs('depositBtn');
     var withdrawBtn = qs('withdrawBtn');
+    var serviceTransferBtn = qs('serviceTransfer');
+    var serviceRechargeBtn = qs('serviceRecharge');
+    var serviceDataBtn = qs('serviceData');
+    var serviceElectricityBtn = qs('serviceElectricity');
+    var serviceTVBtn = qs('serviceTV');
+    var serviceReferBtn = qs('serviceRefer');
     var headerAvatar = qs('headerAvatar');
     var headerGreeting = qs('headerGreeting');
     var txModal = qs('transactionModalBackdrop');
     var txTitle = qs('txTitle');
     var txAmount = qs('txAmount');
+    var txRecipient = qs('txRecipient');
+    var txRecipientRow = qs('txRecipientRow');
+    var txBundle = qs('txBundle');
+    var txBundleRow = qs('txBundleRow');
+    var txNetwork = qs('txNetwork');
+    var txNetworkRow = qs('txNetworkRow');
+    var txErrorRow = qs('txErrorRow');
+    var txError = qs('txError');
+    var confirmModal = qs('confirmModalBackdrop');
+    var confirmDetails = qs('confirmDetails');
+    var confirmCancel = qs('confirmCancel');
+    var confirmOk = qs('confirmOk');
+    var referModal = qs('referModalBackdrop');
+    var referCode = qs('referCode');
+    var copyRefer = qs('copyRefer');
+    var referClose = qs('referClose');
+    var toastContainer = qs('toastContainer');
+    var pendingConfirmData = null;
     var txCancel = qs('txCancel');
     var txSubmit = qs('txSubmit');
     if(!btn||!amtEl)return;
@@ -27,34 +51,149 @@
     }catch(e){}
     var balance=parseCurrency(amtEl.dataset.amount||amtEl.textContent||'0');
     function updateBalanceDisplay(hidden){if(!amtEl)return;amtEl.textContent=hidden?'₦•••••••••':formatCurrency(balance);amtEl.dataset.amount=formatCurrency(balance);}
+    var _audioCtx = null;
+    function _playSuccessTone(){ try{ if(!_audioCtx) _audioCtx = new (window.AudioContext||window.webkitAudioContext)(); var o = _audioCtx.createOscillator(); var g = _audioCtx.createGain(); o.type = 'sine'; o.frequency.value = 880; g.gain.value = 0.0001; o.connect(g); g.connect(_audioCtx.destination); o.start(); // ramp up
+          g.gain.exponentialRampToValueAtTime(0.05, _audioCtx.currentTime + 0.01);
+          setTimeout(function(){ g.gain.exponentialRampToValueAtTime(0.0001, _audioCtx.currentTime + 0.18); setTimeout(function(){ try{o.stop(); o.disconnect(); g.disconnect();}catch(e){} },220); },120);
+        }catch(e){}
+    }
+    function showToast(msg,type){ if(!toastContainer) return; var t=document.createElement('div'); t.className='toast '+(type||''); var txt=document.createElement('span'); txt.textContent=msg; t.appendChild(txt); var close=document.createElement('button'); close.className='toast-close'; close.textContent='×'; close.addEventListener('click',function(){ t.remove(); }); t.appendChild(close); toastContainer.appendChild(t); if(type==='success') _playSuccessTone(); setTimeout(function(){ if(t.parentNode) t.remove(); },4000); }
     function saveTransaction(tx){try{var key='vtu_transactions';var list=JSON.parse(localStorage.getItem(key)||'[]');list.unshift(tx);localStorage.setItem(key,JSON.stringify(list));}catch(e){}}
+    function renderHistoryPreview(){ try{ var list = JSON.parse(localStorage.getItem('vtu_transactions')||'[]'); var container = document.querySelector('.history-preview-list'); if(!container) return; container.innerHTML=''; var items = list.slice(0,3); if(!items.length){ container.innerHTML = '<div class="transaction-history"><div class="transaction-details"><div class="transaction-name small">No recent transactions</div></div></div>'; return; } items.forEach(function(tx){ var div = document.createElement('div'); div.className='transaction-history'; var sign = (tx.type==='withdraw' || tx.type==='transfer' || tx.type==='recharge' || tx.type==='data' || tx.type==='electricity' || tx.type==='tv')?'- ':'+ '; var amt = (tx.type==='deposit' || tx.type==='reward')?('+ '+formatCurrency(tx.amount)):(sign+formatCurrency(tx.amount)); div.innerHTML = '<div class="transaction-details"><div class="transaction-name">'+esc(tx.name)+'</div><div class="transaction-amount">'+amt+'</div><div class="transaction-date">'+new Date(tx.date).toLocaleString()+'</div></div>'; container.appendChild(div); }); }catch(e){} }
     function addFunds(amount){balance+=amount;saveTransaction({id:Date.now(),type:'deposit',name:'Deposit',amount:amount,date:new Date().toISOString()});updateBalanceDisplay(btn.getAttribute('aria-pressed')==='true');}
     function withdrawFunds(amount){if(amount>balance){alert('Insufficient balance');return;}balance-=amount;saveTransaction({id:Date.now(),type:'withdraw',name:'Withdraw',amount:amount,date:new Date().toISOString()});updateBalanceDisplay(btn.getAttribute('aria-pressed')==='true');}
     function renderToggle(hidden){if(!btn)return;var icon=btn.querySelector('i');if(hidden){btn.setAttribute('aria-label','Show balance');btn.title='Show balance';if(icon)icon.className='fa-solid fa-eye-slash';}else{btn.setAttribute('aria-label','Hide balance');btn.title='Hide balance';if(icon)icon.className='fa-solid fa-eye';}updateBalanceDisplay(hidden);}
     btn.addEventListener('click',function(){var pressed=btn.getAttribute('aria-pressed')==='true';btn.setAttribute('aria-pressed',(!pressed).toString());renderToggle(!pressed);});
-    function showModal(){if(!txModal)return;txModal.classList.add('show');txModal.setAttribute('aria-hidden','false');if(txAmount)txAmount.focus();}
-    function closeModal(){if(!txModal)return;txModal.classList.remove('show');txModal.setAttribute('aria-hidden','true');if(txAmount)txAmount.value='';}
+    function showModal(mode){
+      if(!txModal)return;
+      txModal.classList.add('show');
+      txModal.setAttribute('aria-hidden','false');
+      // determine title and whether recipient input is needed
+      var needsRecipient = false;
+      var title = 'Transaction';
+      if(mode==='deposit'){ title='Deposit'; }
+      else if(mode==='withdraw'){ title='Withdraw'; }
+      else if(mode==='transfer'){ title='Transfer'; needsRecipient=true; }
+      else if(mode==='recharge'){ title='Recharge'; needsRecipient=true; }
+      else if(mode==='data'){ title='Buy Data'; needsRecipient=true; }
+      else if(mode==='electricity'){ title='Electricity'; needsRecipient=true; }
+      else if(mode==='tv'){ title='TV Payment'; needsRecipient=true; }
+      if(txTitle)txTitle.textContent = title;
+      if(txSubmit)txSubmit.dataset.mode = mode;
+      // tailor fields per mode
+      var recipientLabel = document.querySelector('label[for="txRecipient"]');
+      if(mode==='recharge'){
+        // Airtime: show network selector and phone number
+        if(txNetworkRow) txNetworkRow.classList.remove('hidden');
+        if(txNetwork) txNetwork.focus();
+        if(txRecipientRow) txRecipientRow.classList.remove('hidden');
+        if(recipientLabel) recipientLabel.textContent = 'Phone Number';
+        if(txRecipient) txRecipient.placeholder = 'e.g. +2348010000000';
+      } else {
+        if(txNetworkRow) txNetworkRow.classList.add('hidden');
+      }
+      if(mode==='data'){
+        // Data: show network + bundle
+        if(txNetworkRow) txNetworkRow.classList.remove('hidden');
+        if(recipientLabel) recipientLabel.textContent = 'Phone Number';
+        if(txRecipientRow) txRecipientRow.classList.remove('hidden');
+        // populate bundle with data options
+        populateBundleOptions('data');
+      } else if(mode==='tv'){
+        // TV: show bouquet only, recipient is smartcard/account
+        if(txNetworkRow) txNetworkRow.classList.add('hidden');
+        if(recipientLabel) recipientLabel.textContent = 'Smartcard / Account Number';
+        if(txRecipientRow) txRecipientRow.classList.remove('hidden');
+        populateBundleOptions('tv');
+      } else if(mode==='electricity'){
+        if(recipientLabel) recipientLabel.textContent = 'Meter / Account Number';
+        if(txRecipientRow) txRecipientRow.classList.remove('hidden');
+      } else if(mode==='transfer'){
+        if(recipientLabel) recipientLabel.textContent = 'Phone or Account';
+        if(txRecipientRow) txRecipientRow.classList.remove('hidden');
+      }
+      if(needsRecipient && mode!=='data' && mode!=='recharge' && mode!=='tv'){ if(txRecipient) txRecipient.focus(); }
+      // show bundle selector for data/tv modes
+      if(mode==='data' || mode==='tv'){
+        if(txBundleRow)txBundleRow.classList.remove('hidden');
+      } else { if(txBundleRow)txBundleRow.classList.add('hidden'); }
+      if(!needsRecipient && !(mode==='data' || mode==='tv')){ if(txAmount)txAmount.focus(); }
+    }
+    function closeModal(){if(!txModal)return;txModal.classList.remove('show');txModal.setAttribute('aria-hidden','true');if(txAmount){txAmount.value='';txAmount.disabled=false;txAmount.classList.remove('input-disabled');}if(txRecipient)txRecipient.value='';if(txRecipientRow)txRecipientRow.classList.add('hidden');if(txBundle)txBundle.value='';if(txBundleRow)txBundleRow.classList.add('hidden');if(txErrorRow)txErrorRow.style.display='none';if(txError)txError.textContent='';}
     if(depositBtn)depositBtn.addEventListener('click',function(){if(!txTitle||!txSubmit)return;txTitle.textContent='Deposit';txSubmit.dataset.mode='deposit';showModal();});
     if(withdrawBtn)withdrawBtn.addEventListener('click',function(){if(!txTitle||!txSubmit)return;txTitle.textContent='Withdraw';txSubmit.dataset.mode='withdraw';showModal();});
+    if(serviceTransferBtn)serviceTransferBtn.addEventListener('click',function(){ if(!txTitle||!txSubmit) return; showModal('transfer'); });
+    if(serviceRechargeBtn)serviceRechargeBtn.addEventListener('click',function(){ if(!txTitle||!txSubmit) return; showModal('recharge'); });
+    if(serviceDataBtn)serviceDataBtn.addEventListener('click',function(){ if(!txTitle||!txSubmit) return; showModal('data'); });
+    if(serviceElectricityBtn)serviceElectricityBtn.addEventListener('click',function(){ if(!txTitle||!txSubmit) return; showModal('electricity'); });
+    if(serviceTVBtn)serviceTVBtn.addEventListener('click',function(){ if(!txTitle||!txSubmit) return; showModal('tv'); });
+    if(serviceReferBtn)serviceReferBtn.addEventListener('click',function(){
+      // Open referral modal and generate (or reuse) referral code
+      var code = 'WALOAD-' + (Math.random().toString(36).slice(2,8)).toUpperCase();
+      if(referCode) referCode.textContent = code;
+      if(referModal) { referModal.classList.add('show'); referModal.setAttribute('aria-hidden','false'); }
+    });
+    if(copyRefer) copyRefer.addEventListener('click', function(){ var code = (referCode && referCode.textContent) || ''; if(!code) return; try{ navigator.clipboard.writeText(code); showToast('Referral code copied', 'success'); }catch(e){ showToast('Copied (fallback): '+code,'success'); } // save to profile
+      try{ var pf = JSON.parse(localStorage.getItem('vtu_profile')||'null') || {}; pf.referral = code; localStorage.setItem('vtu_profile', JSON.stringify(pf)); }catch(e){}
+    });
+    if(referClose) referClose.addEventListener('click', function(){ if(referModal) { referModal.classList.remove('show'); referModal.setAttribute('aria-hidden','true'); } });
     if(txCancel)txCancel.addEventListener('click',closeModal);
     if(txModal)txModal.addEventListener('click',function(e){if(e.target===txModal)closeModal();});
-    if(txSubmit)txSubmit.addEventListener('click',function(){var v=parseFloat(String(txAmount.value).replace(/[^0-9.]+/g,''));if(!v||v<=0){alert('Enter a valid amount');return;}if(txSubmit.dataset.mode==='deposit'){addFunds(v);}else{withdrawFunds(v);}closeModal();});
-    var moreBtn=qs('moreBtn'),moreOptions=qs('moreOptions');
-    if(moreBtn&&moreOptions){
-      moreBtn.addEventListener('click',function(){
-        var expanded=moreBtn.getAttribute('aria-expanded')==='true';
-        moreBtn.setAttribute('aria-expanded',(!expanded).toString());
-        if(!expanded){
-          moreOptions.classList.add('show');
-          moreOptions.setAttribute('aria-hidden','false');
-          moreBtn.style.display='none'; // Hide the More button when expanded
-        }else{
-          moreOptions.classList.remove('show');
-          moreOptions.setAttribute('aria-hidden','true');
-        }
-      });
-    }
+    // Bundle definitions and helpers
+    var bundleDefinitions = {
+      data: [
+        { val: 'data-small', label: '500MB — ₦200', price: 200 },
+        { val: 'data-medium', label: '1GB — ₦400', price: 400 },
+        { val: 'data-large', label: '5GB — ₦1500', price: 1500 }
+      ],
+      tv: [
+        { val: 'tv-basic', label: 'Basic Bouquet — ₦1200', price: 1200 },
+        { val: 'tv-premium', label: 'Premium Bouquet — ₦3500', price: 3500 }
+      ]
+    };
+    function populateBundleOptions(mode){ if(!txBundle) return; txBundle.innerHTML = '<option value="">-- Select --</option>'; var defs = bundleDefinitions[mode]||[]; defs.forEach(function(d){ var opt = document.createElement('option'); opt.value = d.val; opt.textContent = d.label; txBundle.appendChild(opt); }); }
+    // When a bundle is selected, autofill amount and lock input
+    if(txBundle) txBundle.addEventListener('change', function(){ var val = txBundle.value; if(!val){ if(txAmount){ txAmount.disabled = false; txAmount.classList.remove('input-disabled'); txAmount.value = ''; } return; } var list = (bundleDefinitions.data.concat(bundleDefinitions.tv)); var found = list.find(function(x){return x.val===val;}); if(found){ if(txAmount){ txAmount.value = found.price; txAmount.disabled = true; txAmount.classList.add('input-disabled'); } } else { if(txAmount){ txAmount.disabled = false; txAmount.classList.remove('input-disabled'); } } });
+
+    // Ensure network selection existence
+    if(txNetwork){ txNetwork.addEventListener('change', function(){ /* placeholder if later needed */ }); }
+    function openConfirm(details){ if(!confirmModal) return; pendingConfirmData = details; if(confirmDetails) confirmDetails.innerHTML = '<div class="small">'+esc(details.title)+'</div><div style="margin-top:8px;"><strong>'+esc(details.summary)+'</strong></div>'; confirmModal.classList.add('show'); confirmModal.setAttribute('aria-hidden','false'); }
+    function closeConfirm(){ if(!confirmModal) return; confirmModal.classList.remove('show'); confirmModal.setAttribute('aria-hidden','true'); pendingConfirmData = null; }
+    function performTransaction(details){ var mode = details.mode; var v = details.amount; var recip = details.recipient || ''; var bundle = details.bundle || ''; if(mode==='deposit'){ addFunds(v); showToast('Deposit successful','success'); } else { if(v>balance){ showToast('Insufficient balance','error'); return false; } balance -= v; var typeName = mode; var prettyName = details.title || mode; // map bundle value to human label
+      var bundleLabel = '';
+      if(bundle){ var all = (bundleDefinitions.data||[]).concat(bundleDefinitions.tv||[]); var b = all.find(function(x){return x.val===bundle;}); if(b) bundleLabel = b.label; else bundleLabel = bundle; }
+      var name = prettyName + (recip?(' for '+recip):'') + (bundleLabel?(' ('+bundleLabel+')'):''); saveTransaction({id:Date.now(),type:typeName,name:name,amount:v,date:new Date().toISOString()}); updateBalanceDisplay(btn.getAttribute('aria-pressed')==='true'); showToast(prettyName+' successful','success'); } return true; }
+    // update preview after successful transaction
+    var _oldPerform = performTransaction;
+    performTransaction = function(details){ var ok = _oldPerform(details); if(ok){ try{ renderHistoryPreview(); }catch(e){} } return ok; };
+    if(txSubmit) txSubmit.addEventListener('click', function(){
+      if(!txSubmit) return;
+      if(txErrorRow) txErrorRow.style.display = 'none';
+      if(txError) txError.textContent = '';
+      var v = parseFloat(String(txAmount.value).replace(/[^0-9.]+/g,''));
+      if(!v || v <= 0){ if(txErrorRow) txErrorRow.style.display = 'block'; if(txError) txError.textContent = 'Enter a valid amount'; return; }
+      var mode = txSubmit.dataset.mode || 'withdraw';
+      var recip = (txRecipient && String(txRecipient.value||'').trim()) || '';
+      var bundleVal = (txBundle && txBundle.value) || '';
+      // Basic recipient validation for modes that need it
+      if(mode==='transfer' || mode==='recharge' || mode==='data' || mode==='electricity' || mode==='tv'){
+        if(!recip){ if(txErrorRow) txErrorRow.style.display = 'block'; if(txError) txError.textContent = 'Enter recipient/number/account'; return; }
+      }
+      // Network required for recharge and data
+      if((mode==='recharge' || mode==='data') && txNetwork){ if(!txNetwork.value){ if(txErrorRow) txErrorRow.style.display='block'; if(txError) txError.textContent='Select network'; return; } }
+      if(mode==='data' || mode==='tv'){ if(!bundleVal){ if(txErrorRow) txErrorRow.style.display='block'; if(txError) txError.textContent='Select a bundle or bouquet'; return; } }
+      var title = txTitle ? txTitle.textContent : (mode.charAt(0).toUpperCase()+mode.slice(1));
+      // Use human bundle label if available
+      var bundleLabel = '';
+      if(bundleVal){ var all = (bundleDefinitions.data||[]).concat(bundleDefinitions.tv||[]); var b = all.find(function(x){ return x.val === bundleVal; }); if(b) bundleLabel = b.label; else bundleLabel = bundleVal; }
+      var summary = title + ' — ' + formatCurrency(v) + (recip?(' to '+recip):'') + (bundleLabel?(' ('+bundleLabel+')'):'');
+      openConfirm({ mode: mode, amount: v, recipient: recip, bundle: bundleVal, title: title, summary: summary });
+    });
+    if(confirmCancel) confirmCancel.addEventListener('click', function(){ closeConfirm(); });
+    if(confirmOk) confirmOk.addEventListener('click', function(){ if(!pendingConfirmData) return; var ok = performTransaction(pendingConfirmData); if(ok){ closeConfirm(); closeModal(); } else { closeConfirm(); } });
+    // 'More' button and hidden options were removed — services are now visible inline.
     renderToggle(btn.getAttribute('aria-pressed')==='true');
+    try{ renderHistoryPreview(); }catch(e){}
   })();
 
   // --- Profile Page Logic ---
