@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WaLoad</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="header">
+    <a href="features/profile.html"><div class="avatar-small" id="headerAvatar">OY</div></a>
+        <div>
+            <div class="greeting" id="headerGreeting">Hi, Oyin</div>
+            <div class="subtitle">Home of Airtime and Cheap Data Bundles</div>
+        </div>
+    </div>
+    
+    <div class="balance-card">
+        <div class="balance-label">
+            <span>Total Balance</span>
+        </div>
+            <div class="balance-row">
+                <div class="balance-amount" id="balanceAmount" data-amount="₦88,906,282.00">₦88,906,282.00</div>
+                <button class="balance-toggle" id="balanceToggle" aria-pressed="false" aria-label="Hide balance" title="Hide balance">
+                    <i class="fa-solid fa-eye" aria-hidden="true"></i>
+                </button>
+                <button id="depositBtn" class="btn">Deposit</button>
+            </div>
+    </div>
+
+    <div class="services-grid">
+        <div class="service-item">
+            <div class="service-icon"><i class="fa-solid fa-mobile-screen-button" aria-hidden="true"></i></div>
+            <div class="service-label">Recharge</div>
+        </div>
+        <div class="service-item">
+            <div class="service-icon"><i class="fa-solid fa-box" aria-hidden="true"></i></div>
+            <div class="service-label">Data Bundle</div>
+        </div>
+        <div class="service-item">
+            <div class="service-icon"><i class="fa-solid fa-bolt" aria-hidden="true"></i></div>
+            <div class="service-label">Electricity</div>
+        </div>
+        <div class="service-item" id="moreService">
+            <button id="moreBtn" class="service-more" aria-expanded="false" aria-controls="moreOptions">
+                <div class="service-icon"><i class="fa-solid fa-ellipsis" aria-hidden="true"></i></div>
+                <div class="service-label">More</div>
+            </button>
+        </div>
+    </div>
+    <!-- Hidden expanded options for More -->
+    <div class="more-options" id="moreOptions" aria-hidden="true">
+        <div class="service-item more-tv">
+            <div class="service-icon"><i class="fa-solid fa-tv" aria-hidden="true"></i></div>
+            <div class="service-label">TV</div>
+        </div>
+        <div class="service-item more-refer">
+            <div class="service-icon"><i class="fa-solid fa-user-group" aria-hidden="true"></i></div>
+            <div class="service-label">Refer & Earn</div>
+        </div>
+    </div>
+    <div class="money-transfer">
+        <div class="section-title">History</div>
+        <div class="transaction-history">
+            <div class="transaction-details">
+                <div class="transaction-name">Received from FOLUSO FUNMILAYO</div>
+                <div class="transaction-amount">+ ₦9,020.00</div>
+                <div class="transaction-date">May 12, 2023, 11:07 AM</div>
+            </div>
+            <a href="features/history.html" class="history-link">History &gt;</a>
+        </div>
+    </div>
+    
+    <div class="section-title">Services</div>
+    <div class="promo-card">
+        <div class="promo-title">Merge Your Dance Cards</div>
+        <div class="promo-subtitle">By Monday<br>Unlock your rewards</div>
+        <button class="promo-button">Join Now</button>
+    </div>
+    
+    <!-- Fixed bottom navigation -->
+    <nav class="bottom-nav" role="navigation" aria-label="Bottom Navigation">
+        <a href="#" class="nav-btn active">
+            <i class="fa-solid fa-house" aria-hidden="true"></i>
+            <span>Home</span>
+        </a>
+        <a href="#" class="nav-btn">
+            <i class="fa-solid fa-wallet" aria-hidden="true"></i>
+            <span>Finance</span>
+        </a>
+        <a href="#" class="nav-btn">
+            <i class="fa-solid fa-gift" aria-hidden="true"></i>
+            <span>Rewards</span>
+        </a>
+        <a href="features/profile.html" class="nav-btn">
+            <i class="fa-solid fa-user" aria-hidden="true"></i>
+            <span>Me</span>
+        </a>
+    </nav>
+    <!-- Transaction Modal -->
+    <div class="modal-backdrop" id="transactionModalBackdrop" role="dialog" aria-hidden="true">
+        <div class="modal" role="document" aria-labelledby="txTitle">
+            <h3 id="txTitle">Deposit</h3>
+            <div class="modal-row">
+                <label for="txAmount" class="small">Amount (NGN)</label>
+                <input id="txAmount" type="number" min="0" step="0.01" placeholder="0.00">
+            </div>
+            <div class="modal-actions">
+                <button id="txCancel" class="btn secondary">Cancel</button>
+                <button id="txSubmit" class="btn">Submit</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/script.js"></script>
+</body>
+</html>
