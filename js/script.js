@@ -244,4 +244,110 @@
   (function(){
     var list=document.querySelector('.history-list');if(!list)return;try{var txs=JSON.parse(localStorage.getItem('vtu_transactions')||'[]');txs.forEach(function(tx){var div=document.createElement('div');div.className='transaction-history';var sign=(tx.type==='withdraw'||tx.type==='payment')?'- ':'+ ';div.innerHTML='<div class="transaction-details"><div class="transaction-name">'+esc(tx.name)+'</div><div class="transaction-amount">'+sign+formatCurrency(tx.amount)+'</div><div class="transaction-date">'+new Date(tx.date).toLocaleString()+'</div></div>';list.insertBefore(div,list.firstChild);});}catch(e){}
   })();
+
+  // --- Rewards calendar module (month view, prev/next, streaks) ---
+  (function(){
+    var checkinKey = 'rewards_checkins';
+    var streakKey = 'rewards_streak';
+    function isoDate(d){ var dt = new Date(d); return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0'); }
+    function loadCheckins(){ try{ return JSON.parse(localStorage.getItem(checkinKey)||'{}'); }catch(e){ return {}; } }
+    function saveCheckins(o){ localStorage.setItem(checkinKey, JSON.stringify(o)); }
+    function loadStreak(){ try{ return JSON.parse(localStorage.getItem(streakKey)||'{}'); }catch(e){ return {}; } }
+    function saveStreak(o){ localStorage.setItem(streakKey, JSON.stringify(o)); }
+    function grantReward(amount, note){ try{ var key='vtu_transactions'; var list=JSON.parse(localStorage.getItem(key)||'[]'); list.unshift({id:Date.now(),type:'reward',name:note||'Reward',amount:amount,date:new Date().toISOString()}); localStorage.setItem(key,JSON.stringify(list)); }catch(e){} }
+
+    function createCalendar(containerId){
+      var calEl = document.getElementById(containerId);
+      if(!calEl) return null;
+      var monthTitleEl = document.getElementById('monthTitle');
+      var prevBtn = document.getElementById('prevMonth');
+      var nextBtn = document.getElementById('nextMonth');
+      var checkinTodayBtn = document.getElementById('checkinToday');
+      var streakInfoEl = document.getElementById('streakInfo');
+      var state = { viewYear: (new Date()).getFullYear(), viewMonth: (new Date()).getMonth() };
+
+      function updateStreakDisplay(){ var s = loadStreak()||{}; var count = s.streak || 0; if(streakInfoEl) streakInfoEl.textContent = 'Streak: '+count; }
+
+      function render(){
+        if(!calEl) return;
+        calEl.innerHTML = '';
+        var now = new Date();
+        var year = state.viewYear; var month = state.viewMonth;
+        var monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+        if(monthTitleEl) monthTitleEl.textContent = monthNames[month] + ' ' + year;
+        var first = new Date(year, month, 1);
+        var startWeekday = first.getDay();
+        var days = new Date(year, month+1, 0).getDate();
+        var wrapper = document.createElement('div'); wrapper.className = 'calendar-wrapper';
+        var grid = document.createElement('div'); grid.className = 'calendar-grid';
+        var headings = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat']; headings.forEach(function(h){ var hd=document.createElement('div'); hd.className='calendar-head'; hd.textContent=h; grid.appendChild(hd); });
+        for(var i=0;i<startWeekday;i++){ var b=document.createElement('div'); b.className='calendar-day empty'; grid.appendChild(b); }
+        var checkins = loadCheckins();
+        var todayIso = isoDate(new Date());
+        for(var d=1; d<=days; d++){
+          (function(dLocal){
+            var dt = new Date(year, month, dLocal);
+            var iso = isoDate(dt);
+            var btn = document.createElement('button'); btn.type='button'; btn.className='calendar-day'; btn.textContent = dLocal;
+            if(checkins[iso]){ btn.classList.add('checked'); btn.title = 'Checked in'; }
+            if(iso === todayIso){ btn.classList.add('today'); btn.title = btn.title ? btn.title+' (Today)' : 'Today'; }
+            btn.addEventListener('click', function(){ if(iso !== todayIso){ window.showAppToast && window.showAppToast('You can only check in for today','error'); return; } attemptCheckin(iso); });
+            grid.appendChild(btn);
+          })(d);
+        }
+        wrapper.appendChild(grid);
+        calEl.appendChild(wrapper);
+        updateStreakDisplay();
+      }
+
+      function attemptCheckin(iso){ var c = loadCheckins(); if(c[iso]){ window.showAppToast && window.showAppToast('Already checked in today','success'); return; } c[iso] = true; saveCheckins(c); // update streak
+        var s = loadStreak() || {}; var prevIso = s.last || null; var newStreak = 1;
+        if(prevIso){ // check if prevIso is yesterday
+          var prev = new Date(prevIso); var today = new Date(iso); var diff = (today - prev) / (1000*60*60*24);
+          if(Math.round(diff) === 1) newStreak = (s.streak||0) + 1; else newStreak = 1;
+        }
+        s.last = iso; s.streak = newStreak; saveStreak(s); // grant base reward
+        grantReward(50,'Daily Check-in'); window.showAppToast && window.showAppToast('Checked in — +₦50','success');
+        // streak bonuses
+        var streakBonuses = {3:20,7:100,14:300};
+        if(streakBonuses[newStreak]){ var bonus = streakBonuses[newStreak]; grantReward(bonus,'Streak bonus ('+newStreak+' days)'); window.showAppToast && window.showAppToast('Streak bonus: +₦'+bonus,'success'); }
+        render();
+      }
+
+      if(prevBtn) prevBtn.addEventListener('click', function(){ state.viewMonth--; if(state.viewMonth<0){ state.viewMonth=11; state.viewYear--; } render(); });
+      if(nextBtn) nextBtn.addEventListener('click', function(){ state.viewMonth++; if(state.viewMonth>11){ state.viewMonth=0; state.viewYear++; } render(); });
+      if(checkinTodayBtn) checkinTodayBtn.addEventListener('click', function(){ var iso = isoDate(new Date()); attemptCheckin(iso); });
+
+      // initial render
+      render();
+      return { render: render };
+    }
+
+    // auto-init when rewards calendar exists on the page
+    try{ if(document.getElementById('checkinCalendar')){ createCalendar('checkinCalendar'); } }catch(e){}
+  })();
+
+  // --- Rewards manager (cashback, coupons) ---
+  (function(){
+    function qs(id){ return document.getElementById(id); }
+    var cashbackEl = qs('rewardsCashback');
+    var claimBtn = qs('claimCashback');
+    var couponsList = qs('couponsList');
+    if(!cashbackEl && !couponsList && !claimBtn) return;
+
+    function computeCashback(){ try{ var txs = JSON.parse(localStorage.getItem('vtu_transactions')||'[]'); var cb=0; txs.forEach(function(tx){ if(['recharge','data','electricity','tv'].indexOf(tx.type)!==-1){ cb += Number(tx.amount||0)*0.01; }}); cb = Math.round(cb*100)/100; if(cashbackEl) cashbackEl.textContent = '₦' + cb.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}); return cb;}catch(e){return 0;} }
+
+    var coupons = JSON.parse(localStorage.getItem('vtu_coupons')||'[]');
+    function syncCoupons(){ try{ var txs = JSON.parse(localStorage.getItem('vtu_transactions')||'[]'); txs.forEach(function(tx){ if(Number(tx.amount||0) >= 1000 && ['recharge','data','electricity','tv'].indexOf(tx.type)!==-1){ var found = coupons.find(function(c){ return c.txId===tx.id; }); if(!found){ var code = 'CPN-'+String(tx.id).slice(-6).toUpperCase(); var val = Math.round(Number(tx.amount||0) * 0.02); coupons.push({code:code,txId:tx.id,value:val,used:false}); } } }); localStorage.setItem('vtu_coupons', JSON.stringify(coupons)); }catch(e){}
+    }
+
+    function renderCoupons(){ if(!couponsList) return; couponsList.innerHTML=''; if(!coupons.length){ couponsList.innerHTML='<div class="small">No coupons yet</div>'; return; } coupons.forEach(function(c,idx){ var div = document.createElement('div'); div.className='card-item'; div.innerHTML = '<div><div class="strong">'+esc(c.code)+'</div><div class="small">Value: ₦'+Number(c.value).toLocaleString()+'</div></div><div>'+(c.used?'<span class="small">Used</span>':'<button data-idx="'+idx+'" class="btn apply-coupon">Apply</button>')+'</div>'; couponsList.appendChild(div); }); Array.from(couponsList.querySelectorAll('.apply-coupon')).forEach(function(b){ b.addEventListener('click', function(){ var idx = Number(b.dataset.idx); var c = coupons[idx]; if(!c) return; try{ var key='vtu_transactions'; var list = JSON.parse(localStorage.getItem(key)||'[]'); list.unshift({id:Date.now(),type:'coupon',name:'Coupon '+c.code,amount:Number(c.value),date:new Date().toISOString()}); localStorage.setItem(key, JSON.stringify(list)); coupons[idx].used = true; localStorage.setItem('vtu_coupons', JSON.stringify(coupons)); window.showAppToast && window.showAppToast('Coupon applied: ₦'+Number(c.value),'success'); renderCoupons(); }catch(e){ window.showAppToast && window.showAppToast('Could not apply coupon','error'); } }); }); }
+
+    if(claimBtn){ claimBtn.addEventListener('click', function(){ var cb = computeCashback(); if(cb<=0){ window.showAppToast && window.showAppToast('No cashback available','error'); return; } try{ var key='vtu_transactions'; var list=JSON.parse(localStorage.getItem(key)||'[]'); list.unshift({id:Date.now(),type:'reward',name:'Cashback Claim',amount:cb,date:new Date().toISOString()}); localStorage.setItem(key,JSON.stringify(list)); window.showAppToast && window.showAppToast('Cashback claimed: ₦'+cb,'success'); // resync coupons in case transactions changed
+          syncCoupons(); renderCoupons(); }catch(e){ window.showAppToast && window.showAppToast('Could not claim cashback','error'); } }); }
+
+    // init
+    computeCashback(); syncCoupons(); renderCoupons();
+  })();
+
 })();

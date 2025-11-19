@@ -31,6 +31,11 @@
       <div class="reward-section" id="calendarSection">
         <div class="strong">Daily Check-in</div>
         <div class="small mb-8">Check in daily to earn rewards.</div>
+        <div class="month-header" style="margin-bottom:8px; display:flex;align-items:center;justify-content:space-between;gap:8px;">
+          <button id="prevMonth" class="btn secondary" aria-label="Previous month">‹</button>
+          <div style="flex:1;text-align:center;"><div id="monthTitle" class="month-title">Month</div><div id="streakInfo" class="small" style="color:#1b7b3a;margin-top:4px;">Streak: 0</div></div>
+          <button id="nextMonth" class="btn" aria-label="Next month">›</button>
+        </div>
         <div id="checkinCalendar" class="checkin-calendar" aria-label="Daily check-in calendar"></div>
         <div style="margin-top:8px;"><button id="checkinToday" class="btn">Check in Today</button></div>
       </div>
@@ -68,81 +73,6 @@
   </nav>
 
   <script src="../js/script.js"></script>
-  <script>
-    (function(){
-      // Rewards page: compute cashback and coupons
-      function qs(id){return document.getElementById(id);}
-      var cashbackEl = qs('rewardsCashback');
-      var claimBtn = qs('claimCashback');
-      var couponsList = qs('couponsList');
-      try{
-        var txs = JSON.parse(localStorage.getItem('vtu_transactions')||'[]');
-      }catch(e){var txs=[]}
-      // compute unclaimed cashback: 1% of spending (exclude deposits/transfers)
-      var cb = 0;
-      txs.forEach(function(tx){ if(['recharge','data','electricity','tv'].indexOf(tx.type)!==-1){ cb += Number(tx.amount||0) * 0.01; }});
-      cb = Math.round(cb*100)/100;
-      if(cashbackEl) cashbackEl.textContent = '₦' + cb.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
-
-      // coupons: scan transactions and create coupon objects in localStorage if not present
-      var existing = JSON.parse(localStorage.getItem('vtu_coupons')||'[]');
-      var coupons = existing.slice();
-      txs.forEach(function(tx){ if(Number(tx.amount||0) >= 1000 && ['recharge','data','electricity','tv'].indexOf(tx.type)!==-1){ var found = coupons.find(function(c){return c.txId===tx.id}); if(!found){ var code = 'CPN-'+String(tx.id).slice(-6).toUpperCase(); var val = Math.round(Number(tx.amount||0) * 0.02); coupons.push({code:code,txId:tx.id,value:val,used:false}); } }});
-      localStorage.setItem('vtu_coupons', JSON.stringify(coupons));
-      // render coupons
-      function renderCoupons(){ couponsList.innerHTML=''; if(!coupons.length){ couponsList.innerHTML='<div class="small">No coupons yet</div>'; return; } coupons.forEach(function(c,idx){ var div = document.createElement('div'); div.className='card-item'; div.innerHTML = '<div><div class="strong">'+c.code+'</div><div class="small">Value: ₦'+Number(c.value).toLocaleString()+'</div></div><div>'+(c.used?'<span class="small">Used</span>':'<button data-idx="'+idx+'" class="btn apply-coupon">Apply</button>')+'</div>'; couponsList.appendChild(div); }); Array.from(couponsList.querySelectorAll('.apply-coupon')).forEach(function(b){ b.addEventListener('click', function(){ var idx = Number(b.dataset.idx); var c = coupons[idx]; if(!c) return; // apply: add coupon value to balance as a reward transaction and mark used
-          try{ var balEl = document.getElementById('balanceAmount'); var amt = Number(c.value); var key = 'vtu_transactions'; var list = JSON.parse(localStorage.getItem(key)||'[]'); list.unshift({id:Date.now(),type:'coupon',name:'Coupon '+c.code,amount:amt,date:new Date().toISOString()}); localStorage.setItem(key, JSON.stringify(list)); // mark used
-            coupons[idx].used = true; localStorage.setItem('vtu_coupons', JSON.stringify(coupons)); alert('Coupon applied: ₦'+amt); window.location.reload(); }catch(e){ alert('Could not apply coupon'); } }); }); }
-      renderCoupons();
-
-      if(claimBtn){ claimBtn.addEventListener('click', function(){ if(cb<=0){ alert('No cashback available'); return; } // credit cashback as reward
-            try{ var key='vtu_transactions'; var list=JSON.parse(localStorage.getItem(key)||'[]'); list.unshift({id:Date.now(),type:'reward',name:'Cashback Claim',amount:cb,date:new Date().toISOString()}); localStorage.setItem(key,JSON.stringify(list)); showToast && showToast('Cashback claimed: ₦'+cb,'success'); alert('Cashback claimed: ₦'+cb); window.location.reload(); }catch(e){ alert('Could not claim cashback'); } }); }
-
-      // --- Daily check-in calendar logic ---
-      (function(){
-        var calEl = document.getElementById('checkinCalendar');
-        var checkinBtn = document.getElementById('checkinToday');
-        var storageKey = 'rewards_checkins';
-        function loadCheckins(){ try{ return JSON.parse(localStorage.getItem(storageKey)||'{}'); }catch(e){ return {}; } }
-        function saveCheckins(obj){ localStorage.setItem(storageKey, JSON.stringify(obj)); }
-        function isoDate(d){ var dt = new Date(d); return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0'); }
-        /* build a full-year calendar (12 months) with small month cards */
-        function buildCalendar(){ if(!calEl) return; calEl.innerHTML=''; var now = new Date(); var year = now.getFullYear(); var checkins = loadCheckins();
-          var yearWrapper = document.createElement('div'); yearWrapper.className = 'year-grid';
-          var monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-          for(var m=0;m<12;m++){
-            (function(monthIndex){
-              var first = new Date(year, monthIndex, 1);
-              var startWeekday = first.getDay();
-              var days = new Date(year, monthIndex+1, 0).getDate();
-              var card = document.createElement('div'); card.className='month-card';
-              var title = document.createElement('div'); title.className='month-title'; title.textContent = monthNames[monthIndex] + ' ' + year; card.appendChild(title);
-              var headRow = document.createElement('div'); headRow.className='month-grid';
-              var dayHeads = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat']; dayHeads.forEach(function(h){ var hd=document.createElement('div'); hd.className='month-small-day'; hd.textContent = h.slice(0,3); headRow.appendChild(hd); });
-              card.appendChild(headRow);
-              var grid = document.createElement('div'); grid.className='month-grid';
-              // blanks
-              for(var b=0;b<startWeekday;b++){ var empty = document.createElement('div'); empty.className='calendar-day empty'; grid.appendChild(empty); }
-              for(var d=1; d<=days; d++){
-                var dt = new Date(year, monthIndex, d);
-                var iso = isoDate(dt);
-                var btn = document.createElement('button'); btn.type='button'; btn.className='calendar-day'; btn.textContent = d;
-                if(checkins[iso]){ btn.classList.add('checked'); btn.title='Checked in'; }
-                if(iso === isoDate(new Date())){ btn.classList.add('today'); btn.title = (btn.title?btn.title+' ':'') + 'Today'; }
-                // click handler: only allow checking in for today's date (prevent arbitrary past/future marking)
-                (function(but,isoLocal){ but.addEventListener('click', function(){ var todayIso = isoDate(new Date()); if(isoLocal !== todayIso){ showToast && showToast('You can only check in for today','error'); return; } var c = loadCheckins(); if(c[isoLocal]){ showToast && showToast('Already checked in today','success'); return; } c[isoLocal]=true; saveCheckins(c); showToast && showToast('Checked in — reward granted','success'); try{ var key='vtu_transactions'; var list=JSON.parse(localStorage.getItem(key)||'[]'); list.unshift({id:Date.now(),type:'reward',name:'Daily Check-in',amount:50,date:new Date().toISOString()}); localStorage.setItem(key,JSON.stringify(list)); }catch(e){} buildCalendar(); }); })(btn, iso);
-                grid.appendChild(btn);
-              }
-              card.appendChild(grid);
-              yearWrapper.appendChild(card);
-            })(m);
-          }
-          calEl.appendChild(yearWrapper);
-        }
-        if(checkinBtn){ checkinBtn.addEventListener('click', function(){ var today = new Date(); var iso = isoDate(today); var c = loadCheckins(); if(c[iso]){ showToast && showToast('Already checked in today','success'); return; } c[iso]=true; saveCheckins(c); showToast && showToast('Checked in — reward granted','success'); try{ var key='vtu_transactions'; var list=JSON.parse(localStorage.getItem(key)||'[]'); list.unshift({id:Date.now(),type:'reward',name:'Daily Check-in',amount:50,date:new Date().toISOString()}); localStorage.setItem(key,JSON.stringify(list)); }catch(e){} buildCalendar(); }); }
-        buildCalendar();
-      })();
-    })();
-  </script>
+  
 </body>
 </html>
