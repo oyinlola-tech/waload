@@ -14,13 +14,13 @@
       <h1 class="page-title">Rewards</h1>
     </div>
 
-    <div style="height:72px;"></div>
+    <div style="height:var(--topbar-height);"></div>
 
     <div class="profile-card rewards-container">
       <div class="strong">Your Rewards</div>
       <div class="small mb-8">Cashbacks, coupons and promos based on your activity.</div>
 
-      <div style="margin-top:12px;">
+      <div class="reward-section" id="cashbackSection" style="margin-top:12px;">
         <div class="strong">Total Unclaimed Cashback</div>
         <div id="rewardsCashback" class="small">₦0.00</div>
         <div style="margin-top:8px;"><button id="claimCashback" class="btn">Claim Cashback</button></div>
@@ -28,13 +28,26 @@
 
       <hr style="margin:16px 0;border:none;border-top:1px solid #eee;" />
 
-      <div class="strong">Your Coupons</div>
-      <div id="couponsList" class="card-list" style="margin-top:8px;"></div>
+      <div class="reward-section" id="calendarSection">
+        <div class="strong">Daily Check-in</div>
+        <div class="small mb-8">Check in daily to earn rewards.</div>
+        <div id="checkinCalendar" class="checkin-calendar" aria-label="Daily check-in calendar"></div>
+        <div style="margin-top:8px;"><button id="checkinToday" class="btn">Check in Today</button></div>
+      </div>
 
       <hr style="margin:16px 0;border:none;border-top:1px solid #eee;" />
 
-      <div class="strong">Active Promotions</div>
-      <div class="small" style="margin-top:8px;">- 1% cashback on purchases (Data, TV, Electricity).<br>- Spend ₦1,000+ to receive a coupon worth 2% of that transaction.</div>
+      <div class="reward-section" id="couponsSection">
+        <div class="strong">Your Coupons</div>
+        <div id="couponsList" class="card-list" style="margin-top:8px;"></div>
+      </div>
+
+      <hr style="margin:16px 0;border:none;border-top:1px solid #eee;" />
+
+      <div class="reward-section" id="promotionsSection">
+        <div class="strong">Active Promotions</div>
+        <div class="small" style="margin-top:8px;">- 1% cashback on purchases (Data, TV, Electricity).<br>- Spend ₦1,000+ to receive a coupon worth 2% of that transaction.</div>
+      </div>
     </div>
 
   </div>
@@ -43,10 +56,6 @@
     <a href="../index.html" class="nav-btn">
       <i class="fa-solid fa-house" aria-hidden="true"></i>
       <span>Home</span>
-    </a>
-    <a href="#" class="nav-btn">
-      <i class="fa-solid fa-wallet" aria-hidden="true"></i>
-      <span>Finance</span>
     </a>
     <a href="rewards.html" class="nav-btn active">
       <i class="fa-solid fa-gift" aria-hidden="true"></i>
@@ -87,7 +96,52 @@
       renderCoupons();
 
       if(claimBtn){ claimBtn.addEventListener('click', function(){ if(cb<=0){ alert('No cashback available'); return; } // credit cashback as reward
-          try{ var key='vtu_transactions'; var list=JSON.parse(localStorage.getItem(key)||'[]'); list.unshift({id:Date.now(),type:'reward',name:'Cashback Claim',amount:cb,date:new Date().toISOString()}); localStorage.setItem(key,JSON.stringify(list)); showToast && showToast('Cashback claimed: ₦'+cb,'success'); alert('Cashback claimed: ₦'+cb); window.location.reload(); }catch(e){ alert('Could not claim cashback'); } }); }
+            try{ var key='vtu_transactions'; var list=JSON.parse(localStorage.getItem(key)||'[]'); list.unshift({id:Date.now(),type:'reward',name:'Cashback Claim',amount:cb,date:new Date().toISOString()}); localStorage.setItem(key,JSON.stringify(list)); showToast && showToast('Cashback claimed: ₦'+cb,'success'); alert('Cashback claimed: ₦'+cb); window.location.reload(); }catch(e){ alert('Could not claim cashback'); } }); }
+
+      // --- Daily check-in calendar logic ---
+      (function(){
+        var calEl = document.getElementById('checkinCalendar');
+        var checkinBtn = document.getElementById('checkinToday');
+        var storageKey = 'rewards_checkins';
+        function loadCheckins(){ try{ return JSON.parse(localStorage.getItem(storageKey)||'{}'); }catch(e){ return {}; } }
+        function saveCheckins(obj){ localStorage.setItem(storageKey, JSON.stringify(obj)); }
+        function isoDate(d){ var dt = new Date(d); return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0'); }
+        /* build a full-year calendar (12 months) with small month cards */
+        function buildCalendar(){ if(!calEl) return; calEl.innerHTML=''; var now = new Date(); var year = now.getFullYear(); var checkins = loadCheckins();
+          var yearWrapper = document.createElement('div'); yearWrapper.className = 'year-grid';
+          var monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+          for(var m=0;m<12;m++){
+            (function(monthIndex){
+              var first = new Date(year, monthIndex, 1);
+              var startWeekday = first.getDay();
+              var days = new Date(year, monthIndex+1, 0).getDate();
+              var card = document.createElement('div'); card.className='month-card';
+              var title = document.createElement('div'); title.className='month-title'; title.textContent = monthNames[monthIndex] + ' ' + year; card.appendChild(title);
+              var headRow = document.createElement('div'); headRow.className='month-grid';
+              var dayHeads = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat']; dayHeads.forEach(function(h){ var hd=document.createElement('div'); hd.className='month-small-day'; hd.textContent = h.slice(0,3); headRow.appendChild(hd); });
+              card.appendChild(headRow);
+              var grid = document.createElement('div'); grid.className='month-grid';
+              // blanks
+              for(var b=0;b<startWeekday;b++){ var empty = document.createElement('div'); empty.className='calendar-day empty'; grid.appendChild(empty); }
+              for(var d=1; d<=days; d++){
+                var dt = new Date(year, monthIndex, d);
+                var iso = isoDate(dt);
+                var btn = document.createElement('button'); btn.type='button'; btn.className='calendar-day'; btn.textContent = d;
+                if(checkins[iso]){ btn.classList.add('checked'); btn.title='Checked in'; }
+                if(iso === isoDate(new Date())){ btn.classList.add('today'); btn.title = (btn.title?btn.title+' ':'') + 'Today'; }
+                // click handler: only allow checking in for today's date (prevent arbitrary past/future marking)
+                (function(but,isoLocal){ but.addEventListener('click', function(){ var todayIso = isoDate(new Date()); if(isoLocal !== todayIso){ showToast && showToast('You can only check in for today','error'); return; } var c = loadCheckins(); if(c[isoLocal]){ showToast && showToast('Already checked in today','success'); return; } c[isoLocal]=true; saveCheckins(c); showToast && showToast('Checked in — reward granted','success'); try{ var key='vtu_transactions'; var list=JSON.parse(localStorage.getItem(key)||'[]'); list.unshift({id:Date.now(),type:'reward',name:'Daily Check-in',amount:50,date:new Date().toISOString()}); localStorage.setItem(key,JSON.stringify(list)); }catch(e){} buildCalendar(); }); })(btn, iso);
+                grid.appendChild(btn);
+              }
+              card.appendChild(grid);
+              yearWrapper.appendChild(card);
+            })(m);
+          }
+          calEl.appendChild(yearWrapper);
+        }
+        if(checkinBtn){ checkinBtn.addEventListener('click', function(){ var today = new Date(); var iso = isoDate(today); var c = loadCheckins(); if(c[iso]){ showToast && showToast('Already checked in today','success'); return; } c[iso]=true; saveCheckins(c); showToast && showToast('Checked in — reward granted','success'); try{ var key='vtu_transactions'; var list=JSON.parse(localStorage.getItem(key)||'[]'); list.unshift({id:Date.now(),type:'reward',name:'Daily Check-in',amount:50,date:new Date().toISOString()}); localStorage.setItem(key,JSON.stringify(list)); }catch(e){} buildCalendar(); }); }
+        buildCalendar();
+      })();
     })();
   </script>
 </body>
