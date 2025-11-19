@@ -441,7 +441,7 @@ body {
 
 /* History page tweaks moved from features/history.html */
 .history-container { padding: 20px; max-width: var(--app-max-width); margin: 0 auto; }
-.history-header { display:flex; align-items:center; gap:12px; margin-bottom:18px; }
+.history-header { display:flex; align-items:center; gap:12px; margin-bottom:18px; margin-left: -72px; }
 .history-header { padding: 8px 12px; box-sizing: border-box; }
 .history-header .nav-btn { width:44px; height:44px; display:flex; align-items:center; justify-content:center; border-radius:8px; text-decoration:none; color:inherit; }
 .history-list { background: #fff; border-radius: 12px; padding: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.04); }
