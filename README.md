@@ -6,9 +6,9 @@
 
 **What’s Included**
 - `index.html` — main UI and components (balance, services, history preview, modals)
-- `css/styles.css` — styles and layout
-- `js/script.js` — all frontend logic: balance toggle, deposit/withdraw/transfer, profile storage, history rendering
-- `features/` — (if present) profile/history feature pages (linked from main UI)
+- `css/styles.css` — styles and layout (mobile-first; see `:root` variables for `--app-max-width`)
+- `js/script.js` — all frontend logic: balance toggle, deposit/withdraw/transfer, profile storage, history rendering, plus the centralized rewards/calendar/coupons logic
+- `features/` — supplemental pages: `features/rewards.html`, `features/profile.html`, `features/history.html`
 
 **Quick Start**
 1. Open the project in your editor.
@@ -30,101 +30,73 @@ npx serve -s . -l 8000
 # or install: npm i -g serve; serve -s . -l 8000
 ```
 
+**Recent Changes (Nov 2025)**
+- Removed the redundant "Finance" / "Fiance" bottom navigation item across pages (now: Home, Rewards, Me).
+- Rewards system centralized into `js/script.js`: daily check-in calendar (clickable), month navigation (prev/next), streak tracking, and reward granting.
+- Coupons and cashback logic moved into `js/script.js` and now render inside `features/rewards.html` via markup hooks (`#rewardsCashback`, `#couponsList`, etc.).
+- Layout tuned for mobile: new CSS variables in `css/styles.css` include `--app-max-width` (default set to 430px for a mobile target), `--bottom-nav-height`, and `--topbar-height` to keep the header and content aligned with the fixed bottom nav.
+
 **Main Features & Usage**
 - Balance
   - Shows `Total Balance` at top of the page. Click the eye button to hide/show the amount.
-  - The balance value is stored and updated in memory and `localStorage` via transactions.
+  - The balance value is stored and updated by transactions in `localStorage`.
 
-- Deposit / Withdraw / Transfer
-  - Click `Deposit` to open the transaction modal in deposit mode.
-  - Click the `Transfer` service tile (or any other wired button) to open the transaction modal in `transfer` mode. Transfer mode displays a `Recipient` field where you must enter a phone/account identifier.
-  - Withdraw button (if available) opens withdraw mode.
-  - Submitting transactions validates numeric amounts and ensures sufficient balance (for withdraw/transfer). Transactions are saved to `localStorage` under `vtu_transactions`.
+- Transactions (Deposit / Withdraw / Transfer)
+  - Transaction flows live in `js/script.js`. Transactions are validated and saved to `vtu_transactions`.
 
-- Services grid
-  - Displays service tiles: Recharge, Data Bundle, Transfer, Electricity, TV, Refer & Earn.
-  - Tiles are static by default; the `Transfer` tile is wired to open the transfer modal.
+- Rewards (new)
+  - Daily Check-in
+    - Visit `features/rewards.html` to view the calendar and your streak (`#streakInfo`).
+    - Click a day (or use `Check in Today`) to claim the daily reward. The logic is in `js/script.js`.
+    - Streaks are tracked in `localStorage` using `rewards_streak` and individual check-ins are saved under `rewards_checkins`.
+    - Base daily reward and streak bonuses are defined in `js/script.js` as constants (you can edit them there): `CHECKIN_BASE_REWARD`, `STREAK_BONUSES`.
 
-- History
-  - Transactions are saved and rendered in `features/history.html` (and a history preview in `index.html`). Transaction objects are stored in `vtu_transactions`.
+  - Cashback & Coupons
+    - Unclaimed cashback (1% on eligible spend) is shown in `#rewardsCashback`. Claiming cashback creates a `reward` transaction.
+    - Coupons are generated from eligible transactions (spend >= ₦1,000) and saved to `vtu_coupons`. Use the Apply button next to a coupon to add its value as a `coupon` transaction.
 
-- Profile
-  - Profile data saved under `vtu_profile`; profile editing, cards (`vtu_cards`) and limits (`vtu_limits`) are handled on the profile page.
+**Files Changed / Important Hooks**
+- `features/rewards.html` — contains markup hooks used by `js/script.js`:
+  - `#checkinCalendar` — container for the calendar grid
+  - `#prevMonth`, `#nextMonth` — month navigation
+  - `#monthTitle` — current month header
+  - `#streakInfo` — streak display
+  - `#checkinToday` — quick check-in button
+  - `#rewardsCashback`, `#claimCashback` — cashback display and claim action
+  - `#couponsList` — rendered coupon list
+- `js/script.js` — centralized logic: calendar rendering, `attemptCheckin(isoDate)`, `grantReward(amount,note)`, cashback & coupons manager, and general page behaviors.
+- `css/styles.css` — added layout variables and calendar styles. Adjust `--app-max-width` to change the app's centered width (useful for pixel-matching a target device).
+- `features/profile.html` — sections were refactored so each logical block is wrapped in a `.section` for consistent spacing.
 
-**localStorage Keys and Schemas**
-- `vtu_profile` — object, example:
+**localStorage Keys (new / updated)**
+- `vtu_transactions` — array of transactions (existing)
+- `vtu_coupons` — array of generated coupons (code, txId, value, used)
+- `rewards_checkins` — object keyed by ISO date strings for check-in status
+- `rewards_streak` — object that stores `lastDate` and `count` for the user's current streak
 
-```json
-{
-  "name": "Jane Doe",
-  "phone": "+2348010000000",
-  "email": "jane@example.com"
-}
-```
+**Config & Customization**
+- To change the app's visual width, edit `:root { --app-max-width: 430px; }` in `css/styles.css`.
+- To change check-in rewards or streak bonus thresholds, open `js/script.js` and update the constants near the calendar module (look for `CHECKIN_BASE_REWARD` and `STREAK_BONUSES`).
+- Retroactive check-ins: the system currently allows only same-day check-ins through the UI. If you want a retroactive window (e.g., allow yesterday or N days), I can implement that — tell me the desired policy.
 
-- `vtu_transactions` — array of transaction objects (most recent first). Example entry:
-
-```json
-{
-  "id": 1670000000000,
-  "type": "transfer", // 'deposit', 'withdraw', 'transfer', 'payment', etc.
-  "name": "Transfer to +2348010000000",
-  "amount": 1000,
-  "date": "2025-11-18T12:34:56.789Z"
-}
-```
-
-- `vtu_cards` — array of saved cards (brand, last4, exp)
-- `vtu_limits` — object with `per` and `daily` numeric limit values
-
-**Code Walkthrough**
-- `js/script.js` contains three IIFEs that scope code by page/functionality:
-  - Index page logic: balance toggle, deposit/withdraw/transfer modal, transaction saving, services interaction.
-  - Profile page logic: load/save `vtu_profile`, cards management, limits editing.
-  - History page logic: reads `vtu_transactions` and renders them into history list.
-
-Key helper utilities in `js/script.js`:
-- `qs(id)` and `q(sel)` helpers for element selection.
-- `parseCurrency` / `formatCurrency` for consistent formatting.
-- `saveTransaction(tx)` — appends transaction to `vtu_transactions` in `localStorage`.
-
-Transaction modal behavior (quick summary):
-- Modal uses `#transactionModalBackdrop`, `#txTitle`, `#txAmount`, `#txRecipient` (recipient shown only for `transfer` mode), and `#txSubmit` button with `data-mode` (deposit/withdraw/transfer).
-- When `data-mode==='transfer'` modal validates a recipient string and amount, debits the balance, and saves `type: 'transfer'` transaction.
-
-**Accessibility & UX Notes**
-- Interactive controls have `aria-` attributes like `aria-pressed`, `aria-expanded` (removed for the 'More' toggle now inlined).
-- Buttons are reachable by keyboard and have focus outlines (CSS rules added).
-
-**Styling / Layout**
-- `css/styles.css` provides a mobile-friendly single-column layout limited to 500px.
-- Utility classes: `.hidden` is used to hide elements (e.g., recipient row when not in transfer mode).
-- Services grid uses CSS Grid: 4 columns by default; you can adjust `grid-template-columns` to change layout.
-
-**Extending the App**
-- Add click handlers for other service tiles:
-  - Example: wire the TV tile by adding an `id` and a small handler in `js/script.js` to navigate or open a modal.
-
-```js
-var tvBtn = document.getElementById('serviceTv');
-if(tvBtn) tvBtn.addEventListener('click', function(){ window.location.href = 'features/tv.html'; });
-```
-
-- To change which tiles are visible, edit `index.html`'s `.services-grid` markup; to change layout, update `css/styles.css`.
+**Testing / Verification**
+- Recommended: run a local server and open `http://localhost:8000/features/rewards.html` in a mobile-sized viewport (~430px) to validate layout and interactive behavior.
+- Quick manual tests:
+  - Click several days in the calendar and verify `rewards_checkins` in the browser DevTools `Application > Local Storage` pane.
+  - Claim cashback and apply a coupon; confirm new entries in `vtu_transactions`.
 
 **Troubleshooting**
-- If changes to `js/script.js` don't run, clear the browser cache or do a hard reload.
-- If `localStorage` appears empty, confirm you are running the files under the same domain/port (browsers treat `file://` origins differently for storage/security). Using a local server avoids cross-origin quirks.
+- If calendar or rewards aren't visible, ensure `js/script.js` is loaded (check browser console for errors).
+- If transactions or coupons don't persist, confirm you're testing on the same origin (use the local server recommended above).
 
 **Next Steps / Suggestions**
-- Add a confirmation step for transfers (two-step flow) with a transaction review.
-- Add input validation for `Recipient` (phone number normalization) and show recent contacts.
-- Add tests or a small harness to simulate transactions during development.
-- Consider adding a small backend (or mock server) to persist data beyond `localStorage`.
+- Implement retroactive check-in policy (configurable window).
+- Expose a small admin UI in `features/profile.html` to tweak `CHECKIN_BASE_REWARD` and `STREAK_BONUSES` without editing JS.
+- Add visual tests or screenshots to the README for easier QA.
 
 **Contact / Contribution**
-- This repo is a static demo. To propose changes, fork and submit PRs. If you want me to implement a feature (e.g., two-step transfer, TV purchase flow, or a small server backend), say which feature and I will scaffold it.
+- This repo is a static demo. To propose changes, fork and submit PRs. If you want me to implement a feature (retroactive check-ins, admin UI for reward config, or visual QA fixes), tell me which feature and I will implement it.
 
 ---
 
-README generated and placed at the project root. If you'd like it expanded with screenshots, example flows, or API spec for a backend, tell me which sections to prioritize.
+README updated to reflect rewards/calendar and layout changes. If you'd like screenshots, example flows, or a step-by-step test harness, tell me which to add next.
