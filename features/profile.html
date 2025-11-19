@@ -9,11 +9,6 @@
 </head>
 <body>
     <div class="profile-container">
-        <div class="history-header fixed-top">
-            <a href="../index.html" class="nav-btn" aria-label="Back to home"><i class="fa-solid fa-arrow-left"></i></a>
-            <h1 class="page-title">My Profile</h1>
-        </div>
-
         <div style="height:var(--topbar-height)"></div>
 
         <div class="profile-card">
@@ -62,11 +57,6 @@
                 <div class="card-list" id="cardList" style="margin-top:8px;"></div>
             </div>
 
-            <div class="profile-account section" id="sectionAccount">
-                <div class="strong">Account</div>
-                <div class="small">Account actions and settings.</div>
-                <div style="margin-top:8px;"><button id="logoutBtn" class="btn logout">Log out</button></div>
-            </div>
 
             <div class="profile-limits section" id="limitsBox">
                 <div class="row-between-centered">
@@ -96,6 +86,12 @@
                     <button id="cancelProfile" class="btn secondary">Cancel</button>
                 </div>
             </div>
+                        <div class="profile-account section" id="sectionAccount">
+                <div class="strong">Account</div>
+                <div class="small">Account actions and settings.</div>
+                <div style="margin-top:8px;"><button id="logoutBtn" class="btn logout">Log out</button></div>
+            </div>
+
         </div>
 
         <!-- Modals placed after the main card to avoid nesting and keep DOM organized -->
@@ -133,7 +129,7 @@
         </div>
 
     
-
+    </div>
     <!-- bottom nav (same as main) -->
     <nav class="bottom-nav" role="navigation" aria-label="Bottom Navigation">
         <a href="../index.html" class="nav-btn">
