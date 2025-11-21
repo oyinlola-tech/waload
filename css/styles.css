@@ -322,6 +322,11 @@ body {
     max-width: 140px;
 }
 
+ol{
+    list-style-type: none;
+    margin-top: -32px;
+}
+
 .nav-btn i {
     font-size: 18px;
     margin-bottom: 4px;

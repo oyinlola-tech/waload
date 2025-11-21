@@ -114,14 +114,14 @@
       } else if(mode==='tv'){
         // TV: show bouquet only, recipient is smartcard/account
         if(txNetworkRow) txNetworkRow.classList.add('hidden');
-        if(recipientLabel) recipientLabel.textContent = 'Smartcard / Account Number';
+        if(recipientLabel) recipientLabel.textContent = 'Smartcard';
         if(txRecipientRow) txRecipientRow.classList.remove('hidden');
         populateBundleOptions('tv');
       } else if(mode==='electricity'){
-        if(recipientLabel) recipientLabel.textContent = 'Meter / Account Number';
+        if(recipientLabel) recipientLabel.textContent = 'Meter Number';
         if(txRecipientRow) txRecipientRow.classList.remove('hidden');
       } else if(mode==='transfer'){
-        if(recipientLabel) recipientLabel.textContent = 'Phone or Account';
+        if(recipientLabel) recipientLabel.textContent = 'Account Number';
         if(txRecipientRow) txRecipientRow.classList.remove('hidden');
       }
       if(needsRecipient && mode!=='data' && mode!=='recharge' && mode!=='tv'){ if(txRecipient) txRecipient.focus(); }
@@ -132,7 +132,7 @@
       if(!needsRecipient && !(mode==='data' || mode==='tv')){ if(txAmount)txAmount.focus(); }
     }
     function closeModal(){if(!txModal)return;txModal.classList.remove('show');txModal.setAttribute('aria-hidden','true');if(txAmount){txAmount.value='';txAmount.disabled=false;txAmount.classList.remove('input-disabled');}if(txRecipient)txRecipient.value='';if(txRecipientRow)txRecipientRow.classList.add('hidden');if(txBundle)txBundle.value='';if(txBundleRow)txBundleRow.classList.add('hidden');if(txErrorRow)txErrorRow.style.display='none';if(txError)txError.textContent='';}
-    if(depositBtn)depositBtn.addEventListener('click',function(){if(!txTitle||!txSubmit)return;txTitle.textContent='Deposit';txSubmit.dataset.mode='deposit';showModal();});
+    if(depositBtn)depositBtn.addEventListener('click',function(){if(!txTitle||!txSubmit)return;txTitle.textContent='Deposit';txSubmit.dataset.mode='deposit';showModal('deposit');});
     if(withdrawBtn)withdrawBtn.addEventListener('click',function(){if(!txTitle||!txSubmit)return;txTitle.textContent='Withdraw';txSubmit.dataset.mode='withdraw';showModal();});
     if(serviceTransferBtn)serviceTransferBtn.addEventListener('click',function(){ if(!txTitle||!txSubmit) return; showModal('transfer'); });
     if(serviceRechargeBtn)serviceRechargeBtn.addEventListener('click',function(){ if(!txTitle||!txSubmit) return; showModal('recharge'); });
@@ -156,7 +156,8 @@
       data: [
         { val: 'data-small', label: '500MB — ₦200', price: 200 },
         { val: 'data-medium', label: '1GB — ₦400', price: 400 },
-        { val: 'data-large', label: '5GB — ₦1500', price: 1500 }
+        { val: 'data-large', label: '5GB — ₦1500', price: 1500 },
+        { val: 'data-enterprise', label: '100GB - ₦150000', price: 150000}
       ],
       tv: [
         { val: 'tv-basic', label: 'Basic Bouquet — ₦1200', price: 1200 },
