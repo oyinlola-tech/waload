@@ -1,184 +1,49 @@
-<!DOCTYPE html>
+<!-- This wil be the login page because users need to login or sign up first. The login will include the admin login too-->
+ <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WaLoad</title>
+    <title>WaLoad - Login</title>
     <link rel="stylesheet" href="css/styles.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <div class="header">
-    <a href="features/profile.html"><div class="avatar-small" id="headerAvatar">OY</div></a>
-        <div>
-            <div class="greeting" id="headerGreeting">Hi, Oyin</div>
-            <div class="subtitle">Home of Airtime and Cheap Data Bundles</div>
+    <div class="auth-container">
+        <div class="logo">
+            <h1>WaLoad</h1>
         </div>
-    </div>
-    
-    <div class="balance-card">
-        <div class="balance-label">
-            <span>Total Balance</span>
-        </div>
-            <div class="balance-row">
-                <div class="balance-amount" id="balanceAmount" data-amount="₦88,906,282.00" style="margin-top: 12px;">₦88,906,282.00</div>
-                <ol>
-                    <li> <button id="depositBtn" class="btn" style="margin-left: -19px; margin-top: -9px">Deposit</button> </li>
-                    <br>
-                    <li>
-                        <button class="balance-toggle" id="balanceToggle" aria-pressed="false" aria-label="Hide balance" title="Hide balance" style="margin-top: -15px;">
-                           <i class="fa-solid fa-eye" aria-hidden="true"></i>
-                        </button>
-                    </li>
-                </ol>
+        
+        <div class="auth-card">
+            <h2>Welcome Back</h2>
+            <p class="auth-subtitle">Sign in to your account</p>
+            
+            <form class="auth-form">
+                <div class="form-group">
+                    <label for="phone">Phone Number</label>
+                    <input type="tel" id="phone" placeholder="Enter your phone number" required>
+                </div>
                 
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" placeholder="Enter your password" required>
+                </div>
                 
-            </div>
-    </div>
-
-    <div class="services-grid">
-        <div class="service-item">
-            <button class="service-btn" id="serviceRecharge" aria-label="Recharge">
-                <div class="service-icon"><i class="fa-solid fa-mobile-screen-button" aria-hidden="true"></i></div>
-                <div class="service-label">Recharge</div>
-            </button>
-        </div>
-        <div class="service-item">
-            <button class="service-btn" id="serviceData" aria-label="Buy data bundle">
-                <div class="service-icon"><i class="fa-solid fa-box" aria-hidden="true"></i></div>
-                <div class="service-label">Data Bundle</div>
-            </button>
-        </div>
-        <div class="service-item">
-            <button class="service-btn service-transfer" id="serviceTransfer" aria-label="Transfer money">
-                <div class="service-icon"><i class="fa-solid fa-arrow-right-arrow-left" aria-hidden="true"></i></div>
-                <div class="service-label">Transfer</div>
-            </button>
-        </div>
-        <div class="service-item">
-            <button class="service-btn" id="serviceElectricity" aria-label="Pay electricity">
-                <div class="service-icon"><i class="fa-solid fa-bolt" aria-hidden="true"></i></div>
-                <div class="service-label">Electricity</div>
-            </button>
-        </div>
-        <div class="service-item">
-            <button class="service-btn" id="serviceTV" aria-label="Pay TV subscription">
-                <div class="service-icon"><i class="fa-solid fa-tv" aria-hidden="true"></i></div>
-                <div class="service-label">TV</div>
-            </button>
-        </div>
-        <div class="service-item">
-            <button class="service-btn" id="serviceRefer" aria-label="Refer and earn">
-                <div class="service-icon"><i class="fa-solid fa-user-group" aria-hidden="true"></i></div>
-                <div class="service-label">Refer & Earn</div>
-            </button>
-        </div>
-    </div>
-    <div class="money-transfer">
-        <div class="section-title">History</div>
-        <div id="historyPreview">
-            <div class="history-preview-list" aria-live="polite">
-                <!-- Recent transactions will be injected here -->
-            </div>
-            <a href="features/history.html" class="history-link">History &gt;</a>
-        </div>
-    </div>
-    
-    <div class="section-title">Ads</div>
-    <div class="promo-card">
-        <div class="promo-title">Merge Your Dance Cards</div>
-        <div class="promo-subtitle">By Monday<br>Unlock your rewards</div>
-        <button class="promo-button">Join Now</button>
-    </div>
-    
-    <!-- Fixed bottom navigation -->
-    <nav class="bottom-nav" role="navigation" aria-label="Bottom Navigation">
-        <a href="#" class="nav-btn active">
-            <i class="fa-solid fa-house" aria-hidden="true"></i>
-            <span>Home</span>
-        </a>
-        <!-- Finance button removed per request -->
-        <a href="features/rewards.html" class="nav-btn">
-            <i class="fa-solid fa-gift" aria-hidden="true"></i>
-            <span>Rewards</span>
-        </a>
-        <a href="features/profile.html" class="nav-btn">
-            <i class="fa-solid fa-user" aria-hidden="true"></i>
-            <span>Me</span>
-        </a>
-    </nav>
-    <!-- Transaction Modal -->
-    <div class="modal-backdrop" id="transactionModalBackdrop" role="dialog" aria-hidden="true">
-        <div class="modal" role="document" aria-labelledby="txTitle">
-            <h3 id="txTitle">Deposit</h3>
-            <div class="modal-row">
-                <label for="txAmount" class="small">Amount (NGN)</label>
-                <input id="txAmount" type="number" min="0" step="0.01" placeholder="0.00">
-                <div id="txAmountReadonly" class="amount-readonly hidden" aria-hidden="true"></div>
-            </div>
-                <div class="modal-row hidden" id="txNetworkRow">
-                    <label for="txNetwork" class="small">Network</label>
-                    <select id="txNetwork">
-                        <option value="">-- Select network --</option>
-                        <option value="mtn">MTN</option>
-                        <option value="glo">GLO</option>
-                        <option value="airtel">Airtel</option>
-                        <option value="9mobile">9mobile</option>
-                    </select>
+                <div class="form-options">
+                    <label class="checkbox">
+                        <input type="checkbox">
+                        <span class="checkmark"></span>
+                        Remember me
+                    </label>
+                    <a href="#" class="forgot-password">Forgot Password?</a>
                 </div>
-                <div class="modal-row hidden" id="txRecipientRow">
-                    <label for="txRecipient" class="small">Recipient (Phone or Account)</label>
-                    <input id="txRecipient" type="text" placeholder="e.g. +2348010000000">
-                </div>
-                <div class="modal-row hidden" id="txBundleRow">
-                    <label for="txBundle" class="small">Choose Bundle / Bouquet</label>
-                    <select id="txBundle">
-                        <option value="">-- Select --</option>
-                        <!-- Options will be populated dynamically according to mode (data or tv) -->
-                    </select>
-                </div>
-                <div class="modal-row" id="txErrorRow" style="display:none;">
-                    <div id="txError" class="small" style="color:#c0392b;"></div>
-                </div>
-            <div class="modal-actions">
-                <button id="txCancel" class="btn secondary">Cancel</button>
-                <button id="txSubmit" class="btn">Submit</button>
+                
+                <button type="submit" class="auth-button">Sign In</button>
+            </form>
+            
+            <div class="auth-footer">
+                <p>Don't have an account? <a href="register.html">Sign Up</a></p>
             </div>
         </div>
     </div>
-
-    <!-- Confirm modal for transactions -->
-    <div class="modal-backdrop" id="confirmModalBackdrop" role="dialog" aria-hidden="true">
-        <div class="modal" role="document" aria-labelledby="confirmTitle">
-            <h3 id="confirmTitle">Confirm Transaction</h3>
-            <div class="modal-row" id="confirmDetails"></div>
-            <div class="modal-actions">
-                <button id="confirmCancel" class="btn secondary">Cancel</button>
-                <button id="confirmOk" class="btn">Confirm</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Referral modal -->
-    <div class="modal-backdrop" id="referModalBackdrop" role="dialog" aria-hidden="true">
-        <div class="modal" role="document" aria-labelledby="referTitle">
-            <h3 id="referTitle">Refer & Earn</h3>
-            <div class="modal-row">
-                <p class="small">Share this referral code with friends — you both earn rewards.</p>
-                <div style="display:flex;gap:8px;align-items:center;">
-                    <div id="referCode" style="background:#f5f5f5;padding:8px 12px;border-radius:8px;font-weight:700;">WALOAD-XXXXXX</div>
-                    <button id="copyRefer" class="btn">Copy</button>
-                </div>
-            </div>
-            <div class="modal-actions">
-                <button id="referClose" class="btn">Close</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Toast container -->
-    <div id="toastContainer" aria-live="polite" style="position:fixed;right:16px;bottom:90px;z-index:3000;pointer-events:none;"></div>
-
-    <script src="js/script.js"></script>
 </body>
 </html>
